@@ -86,7 +86,8 @@ class MCStepsTest extends BaseTest {
         expectedResults.add(23.8);
         expectedResults.add(24.);
         expectedResults.add(24.2);
-        singleMCStepsTest(lattice3, 2, 2, 2.5, ProbabilityFormula.METROPOLIS, 0., 0.1, 1., expectedResults, "MC Steps Test 2: ");
+        for (int i = 0; i < 10; i++)
+            singleMCStepsTest(lattice3, 2, 2, 2.5, ProbabilityFormula.METROPOLIS, 0., 0.1, 1., expectedResults, "MC Steps Test 2: ");
     }
 
     private void singleMCStepsTest(int[][] lattice, int states, int steps, double TkB, ProbabilityFormula formula, double externalFieldAngle,
@@ -120,11 +121,11 @@ public class SimulationTests {
     static double DELTA = 0.0000001;
 
     public static void main(String[] args) {
-        // runArrangedLatticeTestNTimes(10);
+        runArrangedLatticeTestNTimes(2);
         // randomLatticeTest();
         // new OnnParameterTest().run();
         // new MCStepsTest().run();
-        XYTest();
+        // XYTest();
     }
 
     private static void saveToFile(ArrayList<Double> results, String filename) throws FileNotFoundException {
@@ -191,11 +192,14 @@ public class SimulationTests {
     private static void runArrangedLatticeTestNTimes(int n) {
         double sum = 0;
         int size = 0;
+        long start = System.currentTimeMillis();
         for (int i = 0; i < n; i++) {
             size = arrangedLatticeTest();
             sum += endEnergyPerMagnes.get(endEnergyPerMagnes.size()-1);
         }
+        long finish = System.currentTimeMillis();
         System.out.println("Srednia koncowa energia jednego magnesu = " + Double.toString(sum / (endEnergyPerMagnes.size() * size * size)));
+        System.out.println("Czas trwania testu: " + (finish - start) + "ms");
         System.out.println("=======================");
     }
 
@@ -221,7 +225,7 @@ public class SimulationTests {
     }
 
     public static void randomLatticeTest() {
-        int steps = 10;
+        int steps = 10000;
         double TkB = 2.5;
         ProbabilityFormula formula = ProbabilityFormula.METROPOLIS;
         int states = 2;
@@ -264,7 +268,7 @@ public class SimulationTests {
     }
 
     public static int arrangedLatticeTest() {
-        int steps = 10000;
+        int steps = 50_000;
         double TkB = 2.5;
         ProbabilityFormula formula = ProbabilityFormula.METROPOLIS;
         int states = 2;
@@ -274,7 +278,8 @@ public class SimulationTests {
         List<Double> parameters = new ArrayList<Double>();
         Double Ce = 0.;
         parameters.add(Ce);
-        Double C1 = 1.;
+        Double C1 = 0.;
+        // Double C1 = 1.;
         parameters.add(C1);
 
         MCSimulation mcSimulation = new MCSimulation();

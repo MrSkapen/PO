@@ -28,6 +28,8 @@ public class MCSimulation implements main.Simulation {
         Ce = parameters.get(0);
         Cn = parameters;
         externalFieldAngle = externaFieldAngle;
+        latticeParametersImpl.setCn(parameters);
+        latticeParametersImpl.setExternalFieldAngle(externaFieldAngle);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class MCSimulation implements main.Simulation {
             random = new Random();
             int magnetRowRandom = random.nextInt((int) Math.sqrt(magnetsCount));
             int magnetColRandom = random.nextInt((int) Math.sqrt(magnetsCount));
-            int[][] newLattice = generateLatticeCopy(latticeParametersImpl.lattice());
+            int[][] newLattice = MCHelperSingleton.getInstance().generateLatticeCopy(latticeParametersImpl.lattice());
             DeltaCalculate deltaCalculate = null;
             if (acceptanceRatio > 0.5) {
                 deltaCalculate = new BiggerDelta(random,magnetsCount,magnetRowRandom,magnetColRandom,latticeParametersImpl,Cn,Ce,newLattice,externalFieldAngle);
@@ -79,68 +81,76 @@ public class MCSimulation implements main.Simulation {
         }
     }
 
-    private double calculateEi(int[][] lattice, int i_row, int i_col) {
-        double Ei = 0;
-        for (int n = 1; n < Cn.size(); n++) {
-            neighboursStatesObject.setParameters(lattice, i_row, i_col, n);
-            ArrayList<Integer> neighboursStates = neighboursStatesObject.getNeighboursStates();
-            for (int j = 0; j < neighboursStates.size(); j++) {
-                double alphaI = getAngleInRadians(lattice[i_row][i_col]);
-                double alphaJ = getAngleInRadians(neighboursStates.get(j));
-                Ei -= Cn.get(n) * Math.cos(alphaI - alphaJ);
-            }
-        }
-        return Ei;
-    }
+    // private double calculateEi(int[][] lattice, int i_row, int i_col) {
+    //     double Ei = 0;
+    //     for (int n = 1; n < Cn.size(); n++) {
+    //         neighboursStatesObject.setParameters(lattice, i_row, i_col, n);
+    //         ArrayList<Integer> neighboursStates = neighboursStatesObject.getNeighboursStates();
+    //         for (int j = 0; j < neighboursStates.size(); j++) {
+    //             double alphaI = getAngleInRadians(lattice[i_row][i_col]);
+    //             double alphaJ = getAngleInRadians(neighboursStates.get(j));
+    //             Ei -= Cn.get(n) * Math.cos(alphaI - alphaJ);
+    //         }
+    //     }
+    //     return Ei;
+    // }
 
     private double calculateTotalEnergy(int[][] lattice) {
-        double totalEnergy = -0.5;
-        double nSum = 0;
-        for (int n = 1; n < Cn.size(); n++) {
-            double iSum = 0;
-            for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
-                for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
-                    neighboursStatesObject.setParameters(lattice, i_row, i_col, n);
-                    ArrayList<Integer> neighboursStates = neighboursStatesObject.getNeighboursStates();
-                    double jSum = 0;
-                    for (int j = 0; j < neighboursStates.size(); j++) {
-                        double alphaI = getAngleInRadians(lattice[i_row][i_col]);
-                        double alphaJ = getAngleInRadians(neighboursStates.get(j));
-                        jSum += Math.cos(alphaI - alphaJ);
-                    }
-                    iSum += jSum;
-                }
-            }
-            iSum *= Cn.get(n);
-            nSum += iSum;
+        TotalEnergy totalEnergy = new NoSubtractTotalEnergy();
+        if (Ce != 0) {
+            totalEnergy = new SubtractDecorator(totalEnergy);
         }
-        totalEnergy *= nSum;
-        double subtract = Ce;
-        double iSum = 0;
-        for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
-            for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
-                double alphaI = getAngleInRadians(lattice[i_row][i_col]);
-                iSum += Math.cos(alphaI - externalFieldAngle);
-            }
-        }
-        subtract *= iSum;
-        totalEnergy -= subtract;
-        return totalEnergy;
+        return totalEnergy.calculate(lattice, latticeParametersImpl, -0.5);
     }
+
+    // private double calculateTotalEnergy(int[][] lattice) {
+    //     double totalEnergy = -0.5;
+    //     double nSum = 0;
+    //     for (int n = 1; n < Cn.size(); n++) {
+    //         double iSum = 0;
+    //         for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
+    //             for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
+    //                 neighboursStatesObject.setParameters(lattice, i_row, i_col, n);
+    //                 ArrayList<Integer> neighboursStates = neighboursStatesObject.getNeighboursStates();
+    //                 double jSum = 0;
+    //                 for (int j = 0; j < neighboursStates.size(); j++) {
+    //                     double alphaI = MCHelperSingleton.getInstance().getAngleInRadians(lattice[i_row][i_col], latticeParametersImpl.states());
+    //                     double alphaJ = MCHelperSingleton.getInstance().getAngleInRadians(neighboursStates.get(j), latticeParametersImpl.states());
+    //                     jSum += Math.cos(alphaI - alphaJ);
+    //                 }
+    //                 iSum += jSum;
+    //             }
+    //         }
+    //         iSum *= Cn.get(n);
+    //         nSum += iSum;
+    //     }
+    //     totalEnergy *= nSum;
+    //     double subtract = Ce;
+    //     double iSum = 0;
+    //     for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
+    //         for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
+    //             double alphaI = MCHelperSingleton.getInstance().getAngleInRadians(lattice[i_row][i_col], latticeParametersImpl.states());
+    //             iSum += Math.cos(alphaI - externalFieldAngle);
+    //         }
+    //     }
+    //     subtract *= iSum;
+    //     totalEnergy -= subtract;
+    //     return totalEnergy;
+    // }
 
     private double getAngleInRadians(int magnetState) {
         return 2 * Math.PI * magnetState / latticeParametersImpl.states();
     }
 
-    private int[][] generateLatticeCopy(int[][] lattice) {
-        int[][] latticeCopy = new int[lattice.length][lattice.length];
-        for (int i = 0; i < lattice.length; i++) {
-            for (int j = 0; j < lattice.length; j++) {
-                latticeCopy[i][j] = lattice[i][j];
-            }
-        }
-        return latticeCopy;
-    }
+    // private int[][] generateLatticeCopy(int[][] lattice) {
+    //     int[][] latticeCopy = new int[lattice.length][lattice.length];
+    //     for (int i = 0; i < lattice.length; i++) {
+    //         for (int j = 0; j < lattice.length; j++) {
+    //             latticeCopy[i][j] = lattice[i][j];
+    //         }
+    //     }
+    //     return latticeCopy;
+    // }
 
     private double calculateOrderParameter() {
         int[][] lattice = latticeParametersImpl.lattice();
@@ -148,7 +158,7 @@ public class MCSimulation implements main.Simulation {
         double sum = 0;
         for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
             for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
-                sum += Math.cos(getAngleInRadians(lattice[i_row][i_col]));
+                sum += Math.cos(MCHelperSingleton.getInstance().getAngleInRadians(lattice[i_row][i_col], latticeParametersImpl.states()));
             }
         }
         xAvg *= sum;
@@ -156,7 +166,7 @@ public class MCSimulation implements main.Simulation {
         sum = 0;
         for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
             for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
-                sum += Math.sin(getAngleInRadians(lattice[i_row][i_col]));
+                sum += Math.sin(MCHelperSingleton.getInstance().getAngleInRadians(lattice[i_row][i_col], latticeParametersImpl.states()));
             }
         }
         yAvg *= sum;
@@ -175,8 +185,8 @@ public class MCSimulation implements main.Simulation {
                 neighboursStatesObject.setParameters(lattice, i_row, i_col, 1);
                 neighboursStates = neighboursStatesObject.getNeighboursStates();
                 for (int j = 0; j < neighboursStates.size(); j++) {
-                    double alphaI = getAngleInRadians(lattice[i_row][i_col]);
-                    double alphaJ = getAngleInRadians(neighboursStates.get(j));
+                    double alphaI = MCHelperSingleton.getInstance().getAngleInRadians(lattice[i_row][i_col], latticeParametersImpl.states());
+                    double alphaJ = MCHelperSingleton.getInstance().getAngleInRadians(neighboursStates.get(j), latticeParametersImpl.states());
                     jSum += Math.cos(alphaI - alphaJ);
                 }
                 iSum += jSum;
@@ -217,6 +227,8 @@ public class MCSimulation implements main.Simulation {
         private double _totalEnergy = 0;
         private int[][] _lattice;
         private int _states;
+        private List<Double> _Cn;
+        private double _externalFieldAngle;
 
         @Override
         public double totalEnergy() {
@@ -245,6 +257,14 @@ public class MCSimulation implements main.Simulation {
             return _states;
         }
 
+        public List<Double> Cn() {
+            return _Cn;
+        }
+
+        public double externalFieldAngle() {
+            return _externalFieldAngle;
+        }
+
         protected void setLattice(int[][] lattice) {
             _lattice = new int[lattice.length][lattice.length];
             for (int i = 0; i < lattice.length; i++) {
@@ -260,6 +280,14 @@ public class MCSimulation implements main.Simulation {
 
         protected void setTotalEnergy(double totalEnergy) {
             _totalEnergy = totalEnergy;
+        }
+
+        protected void setCn(List<Double> Cn) {
+            this._Cn = Cn;
+        }
+
+        protected void setExternalFieldAngle(double externalFieldAngle) {
+            this._externalFieldAngle = externalFieldAngle;
         }
     }
 }
