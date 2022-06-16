@@ -4,9 +4,7 @@ import java.lang.Math;
 import java.util.Random;
 
 public class MCSimulation implements main.Simulation {
-
     private LatticeParametersImpl latticeParametersImpl = new LatticeParametersImpl();
-
     private NeighboursStates neighboursStatesObject = new NeighboursStates();
     private ProbabilityFormula formula;
     private double TkB;
@@ -15,9 +13,7 @@ public class MCSimulation implements main.Simulation {
     private double externalFieldAngle;
     private int magnetsCount;
 
-
     public MCSimulation() {
-
     }
 
     @Override
@@ -65,23 +61,13 @@ public class MCSimulation implements main.Simulation {
             int magnetRowRandom = random.nextInt((int) Math.sqrt(magnetsCount));
             int magnetColRandom = random.nextInt((int) Math.sqrt(magnetsCount));
             int[][] newLattice = generateLatticeCopy(latticeParametersImpl.lattice());
+            DeltaCalculate deltaCalculate = null;
             if (acceptanceRatio > 0.5) {
-                int magnetRowRandom2 = random.nextInt((int) Math.sqrt(magnetsCount));
-                int magnetColRandom2 = random.nextInt((int) Math.sqrt(magnetsCount));
-                while (magnetRowRandom == magnetRowRandom2 && magnetColRandom == magnetColRandom2) {
-                    magnetRowRandom2 = random.nextInt((int) Math.sqrt(magnetsCount));
-                    magnetColRandom2 = random.nextInt((int) Math.sqrt(magnetsCount));
-                }
-                int magnetStateChange = random.nextBoolean() ? 1 : -1;
-                int magnetStateChange2 = random.nextBoolean() ? 1 : -1;
-                changeMagnetState(newLattice, magnetRowRandom, magnetColRandom, magnetStateChange);
-                changeMagnetState(newLattice, magnetRowRandom2, magnetColRandom2, magnetStateChange2);
-                deltaE = calculateTotalEnergy(newLattice) - totalEnergy;
+                deltaCalculate = new BiggerDelta(random,magnetsCount,magnetRowRandom,magnetColRandom,latticeParametersImpl,Cn,Ce,newLattice,externalFieldAngle);
             } else {
-                int magnetStateChange = random.nextBoolean() ? 1 : -1;
-                changeMagnetState(newLattice, magnetRowRandom, magnetColRandom, magnetStateChange);
-                deltaE = calculateEi(newLattice, magnetRowRandom, magnetColRandom) - calculateEi(latticeParametersImpl.lattice(), magnetRowRandom, magnetColRandom);
+               deltaCalculate = new SmallerDelta(random,magnetsCount,Cn,latticeParametersImpl);
             }
+            deltaE = deltaCalculate.calculate();
             double R = random.nextDouble();
             double P = calculateP(formula, deltaE, TkB);
             if (R < P) {

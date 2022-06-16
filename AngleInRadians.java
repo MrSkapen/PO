@@ -1,4 +1,4 @@
-public class AngleInRadians implements ProxyInterface{
+public class AngleInRadians {
     int magnetState;
     int states;
 
@@ -8,8 +8,6 @@ public class AngleInRadians implements ProxyInterface{
     }
     public AngleInRadians() {
     }
-
-    @Override
     public double calculate() {
         return 2 * Math.PI * magnetState / states;
     }
