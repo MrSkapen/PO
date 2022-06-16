@@ -6,8 +6,8 @@ import java.util.Random;
 public class MCSimulation implements main.Simulation {
 
     private LatticeParametersImpl latticeParametersImpl = new LatticeParametersImpl();
+
     private NeighboursStates neighboursStatesObject = new NeighboursStates();
-    private Calculate calculate = null;
     private ProbabilityFormula formula;
     private double TkB;
     private double Ce;
@@ -156,6 +156,50 @@ public class MCSimulation implements main.Simulation {
         return latticeCopy;
     }
 
+    private double calculateOrderParameter() {
+        int[][] lattice = latticeParametersImpl.lattice();
+        double xAvg = 1. / magnetsCount;
+        double sum = 0;
+        for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
+            for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
+                sum += Math.cos(getAngleInRadians(lattice[i_row][i_col]));
+            }
+        }
+        xAvg *= sum;
+        double yAvg = 1. / magnetsCount;
+        sum = 0;
+        for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
+            for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
+                sum += Math.sin(getAngleInRadians(lattice[i_row][i_col]));
+            }
+        }
+        yAvg *= sum;
+        return Math.sqrt(xAvg * xAvg + yAvg * yAvg);
+    }
+
+    private double calculateNearestNeighbourOrder() {
+        int[][] lattice = latticeParametersImpl.lattice();
+        neighboursStatesObject.setParameters(lattice, 0, 0, 1);
+        ArrayList<Integer> neighboursStates = neighboursStatesObject.getNeighboursStates();
+        double onn = 1. / (double) (magnetsCount * neighboursStates.size());
+        double iSum = 0;
+        for (int i_row = 0; i_row < Math.sqrt(magnetsCount); i_row++) {
+            for (int i_col = 0; i_col < Math.sqrt(magnetsCount); i_col++) {
+                double jSum = 0;
+                neighboursStatesObject.setParameters(lattice, i_row, i_col, 1);
+                neighboursStates = neighboursStatesObject.getNeighboursStates();
+                for (int j = 0; j < neighboursStates.size(); j++) {
+                    double alphaI = getAngleInRadians(lattice[i_row][i_col]);
+                    double alphaJ = getAngleInRadians(neighboursStates.get(j));
+                    jSum += Math.cos(alphaI - alphaJ);
+                }
+                iSum += jSum;
+            }
+        }
+        onn *= iSum;
+        return onn;
+    }
+
     private double calculateP(ProbabilityFormula formula, double deltaE, double kBT) {
         if (formula == ProbabilityFormula.GLAUBER) {
             return Math.exp(-deltaE / kBT) / (1 + Math.exp(-deltaE / kBT));
@@ -198,14 +242,12 @@ public class MCSimulation implements main.Simulation {
 
         @Override
         public double orderParameter() {
-            calculate = new OrderParameter(latticeParametersImpl, magnetsCount);
-            return calculate.calculate();
+            return calculateOrderParameter();
         }
 
         @Override
         public double nearestNeighbourOrder() {
-            calculate = new NearestNeighbourOrder(latticeParametersImpl,magnetsCount);
-            return calculate.calculate();
+            return calculateNearestNeighbourOrder();
         }
 
         @Override
