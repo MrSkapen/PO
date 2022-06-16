@@ -4,14 +4,14 @@ import java.util.Random;
 
 public class SmallerDelta extends DeltaCalculate{
 
-
-    public SmallerDelta(Random random, int magnetsCount, List<Double> cn, MCSimulation.LatticeParametersImpl latticeParametersImpl) {
+    public SmallerDelta(Random random, int magnetsCount, List<Double> cn, MCSimulation.LatticeParametersImpl latticeParametersImpl, int[][] newLattice) {
         this.random = random;
         this.magnetsCount = magnetsCount;
-        Cn = cn;
+        this.Cn = cn;
         this.latticeParametersImpl = latticeParametersImpl;
+        this.newLattice = newLattice;
     }
-
+    int[][] newLattice;
     private List<Double> Cn;
 
     MCSimulation.LatticeParametersImpl latticeParametersImpl;
@@ -21,7 +21,6 @@ public class SmallerDelta extends DeltaCalculate{
         double deltaE;
         int magnetRowRandom = random.nextInt((int) Math.sqrt(magnetsCount));
         int magnetColRandom = random.nextInt((int) Math.sqrt(magnetsCount));
-        int[][] newLattice = generateLatticeCopy(latticeParametersImpl.lattice());
         int magnetStateChange = random.nextBoolean() ? 1 : -1;
         changeMagnetState(newLattice, magnetRowRandom, magnetColRandom, magnetStateChange);
         deltaE = calculateEi(newLattice, magnetRowRandom, magnetColRandom) - calculateEi(latticeParametersImpl.lattice(), magnetRowRandom, magnetColRandom);

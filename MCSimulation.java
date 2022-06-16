@@ -65,7 +65,7 @@ public class MCSimulation implements main.Simulation {
             if (acceptanceRatio > 0.5) {
                 deltaCalculate = new BiggerDelta(random,magnetsCount,magnetRowRandom,magnetColRandom,latticeParametersImpl,Cn,Ce,newLattice,externalFieldAngle);
             } else {
-               deltaCalculate = new SmallerDelta(random,magnetsCount,Cn,latticeParametersImpl);
+               deltaCalculate = new SmallerDelta(random,magnetsCount,Cn,latticeParametersImpl,newLattice);
             }
             deltaE = deltaCalculate.calculate();
             double R = random.nextDouble();

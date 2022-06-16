@@ -12,8 +12,8 @@ public class BiggerDelta extends DeltaCalculate{
         this.magnetRowRandom = magnetRowRandom;
         this.magnetColRandom = magnetColRandom;
         this.latticeParametersImpl = latticeParametersImpl;
-        Cn = cn;
-        Ce = ce;
+        this.Cn = cn;
+        this.Ce = ce;
         this.newLattice = newLattice;
         this.externalFieldAngle = externalFieldAngle;
     }
